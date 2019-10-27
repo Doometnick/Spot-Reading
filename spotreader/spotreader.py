@@ -1,9 +1,8 @@
 from typing import Generator, Iterable
 import tkinter as tk
-import re
 
 
-class DisplayApp:
+class SpotReader:
     
     """ GUI displaying words in the canvas center with a delay. 
 
@@ -12,9 +11,6 @@ class DisplayApp:
             punctuation. Example: ['Hello,', 'my', 'name', 'is', 'Waldo.'].
         wpm: Words per minute according to which two subsequent words will
             be displayed.
-        end_of_sentence_delay: Delay in milliseconds that is enforced at the end
-            of a sentence to enhance reading experience. If None, the same delay 
-            is used as for all other words.
         wpm_step: Magnitude of change in words per minute.
     """
 
@@ -28,13 +24,9 @@ class DisplayApp:
     FONT_SIZE = 20
     FONT_COLOR = 'white'
 
-    # Pattern to identify end of sentence.
-    EOS_PATTERN = re.compile('.+\.$')
-
     def __init__(self, 
                  words, 
-                 wpm=200, 
-                 end_of_sentence_delay=None, 
+                 wpm=200,  
                  wpm_step=10):
 
         if isinstance(words, Generator):
@@ -46,10 +38,6 @@ class DisplayApp:
 
         self.wpm = wpm
         self.wpm_step = wpm_step
-
-        self.eos_delay = end_of_sentence_delay
-        if self.eos_delay is None:
-            self.eos_delay = self._text_delay
 
         self.root = tk.Tk()
         self.root.wm_title('Spot Reading')
@@ -82,6 +70,7 @@ class DisplayApp:
         # Automatically update delay between two subsequent words.
         self._wpm = int(value)
         self._text_delay = 60 * 1000 // value
+        
 
     def _display_text(self, text):
         self.txt_var.set(text)
@@ -93,14 +82,7 @@ class DisplayApp:
             self.txt_var.set('<Text has finished>')
         else:
             self._display_text(new_text)
-            delay = self.eos_delay if self._eof_found(new_text) else self._text_delay
-            self.root.after(delay, self._show_next_word)
-
-    def _eof_found(self, text):
-        """ Returns True if the text is the end of a sentence,
-        i.e. if there is a full stop after the word and it is
-        the end of the line. Example: 'Python.' """
-        return self.EOS_PATTERN.match(text)     
+            self.root.after(self._text_delay, self._show_next_word)
 
     def _setup_center_text(self):
         self.txt_var = tk.StringVar()
