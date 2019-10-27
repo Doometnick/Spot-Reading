@@ -1,3 +1,4 @@
+from typing import Generator, Iterable
 import tkinter as tk
 import re
 
@@ -5,8 +6,19 @@ import re
 class DisplayApp:
     
     """ GUI displaying words in the canvas center with a delay. 
+
+    Args:
+        words: Iterable or generator of words that will be shown including 
+            punctuation. Example: ['Hello,', 'my', 'name', 'is', 'Waldo.'].
+        wpm: Words per minute according to which two subsequent words will
+            be displayed.
+        end_of_sentence_delay: Delay in milliseconds that is enforced at the end
+            of a sentence to enhance reading experience. If None, the same delay 
+            is used as for all other words.
+        wpm_step: Magnitude of change in words per minute.
     """
 
+    # Settings for tkinter GUI.
     WIDTH = 1200
     HEIGHT = 700
     BG_COLOR_TOP = '#002633'
@@ -16,11 +28,21 @@ class DisplayApp:
     FONT_SIZE = 20
     FONT_COLOR = 'white'
 
+    # Pattern to identify end of sentence.
     EOS_PATTERN = re.compile('.+\.$')
 
-    def __init__(self, text, wpm=200, end_of_sentence_delay=None, wpm_step=10):
+    def __init__(self, 
+                 words, 
+                 wpm=200, 
+                 end_of_sentence_delay=None, 
+                 wpm_step=10):
 
-        self.text = text
+        if isinstance(words, Generator):
+            self.text = words
+        elif isinstance(words, Iterable)
+            self.text = iter(words)
+        else:
+            raise ValueError('words should be iterable or generator.')
 
         self.wpm = wpm
         self.wpm_step = wpm_step
@@ -38,6 +60,8 @@ class DisplayApp:
         self.topbuttonbar = tk.Frame(self.root, width=self.WIDTH, height=50, bg=self.BG_COLOR_TOP)
         self.bottom = tk.Frame(self.root, width=self.WIDTH, height=50, bg=self.BG_COLOR)
         
+        # Setup individual frames for wpm text, 
+        # speed buttons, and displayed text.
         self._setup_wpm_label()
         self._setup_wpm_change_buttons()
         self._setup_center_text()
@@ -59,24 +83,24 @@ class DisplayApp:
         self._wpm = int(value)
         self._text_delay = 60 * 1000 // value
 
-    def _change_text(self, text):
+    def _display_text(self, text):
         self.txt_var.set(text)
 
     def _show_next_word(self):
         try:
             new_text = next(self.text)
         except StopIteration:
-            self.txt_var.set('')
+            self.txt_var.set('<Text has finished>')
         else:
-            self._change_text(new_text)
+            self._display_text(new_text)
             delay = self.eos_delay if self._eof_found(new_text) else self._text_delay
             self.root.after(delay, self._show_next_word)
 
     def _eof_found(self, text):
+        """ Returns True if the text is the end of a sentence,
+        i.e. if there is a full stop after the word and it is
+        the end of the line. Example: 'Python.' """
         return self.EOS_PATTERN.match(text)     
-
-    def _pause_on_eos(self):
-        self.root(after(self.eos_delay, self._show_next_word))
 
     def _setup_center_text(self):
         self.txt_var = tk.StringVar()
@@ -119,4 +143,5 @@ class DisplayApp:
         self._update_wpm_display()
 
     def _update_wpm_display(self):
+        """ Update the text variable used to show the wpm parameter. """
         self.wpm_var.set(f'wpm: {self.wpm}')
