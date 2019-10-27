@@ -39,7 +39,7 @@ class DisplayApp:
 
         if isinstance(words, Generator):
             self.text = words
-        elif isinstance(words, Iterable)
+        elif isinstance(words, Iterable):
             self.text = iter(words)
         else:
             raise ValueError('words should be iterable or generator.')
