@@ -6,7 +6,7 @@ Words are printed to the center of the GUI at a given speed (words per minute, w
 
 The spotreading package can be run with loaded text from a text file or with a generator object. This allows to write custom objects for the text generation and simply feed it into the spotreading class' \_\_init\_\_ function.
 
-![Image not found](https://github.com/Doometnick/Spot-Reading/blob/master/img/img.JPG)
+![Image not found](https://github.com/Doometnick/Spot-Reading/blob/master/img/spotreading.gif)
 
 # Requirements
 Only built-in modules are used.
