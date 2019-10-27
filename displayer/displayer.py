@@ -7,7 +7,9 @@ class DisplayApp:
     """ GUI displaying words in the canvas center with a delay. 
     """
 
-    GEOMETRY = '1200x700'
+    WIDTH = 1200
+    HEIGHT = 700
+    BG_COLOR_TOP = '#002633'
     BG_COLOR = 'black'
 
     FONT = 'Consolas'
@@ -23,29 +25,28 @@ class DisplayApp:
         self.wpm = wpm
         self.wpm_step = wpm_step
 
-        # self.text_delay = self._wpm_to_delay(wpm)
         self.eos_delay = end_of_sentence_delay
         if self.eos_delay is None:
-            self.eos_delay = self.text_delay
+            self.eos_delay = self._text_delay
 
         self.root = tk.Tk()
+        self.root.wm_title('Spot Reading')
         self.root.configure(background=self.BG_COLOR)
-        self.root.geometry(self.GEOMETRY)
+        self.root.geometry(f'{self.WIDTH}x{self.HEIGHT}')
 
-        self._setup_text_label()
+        self.topbar = tk.Frame(self.root, width=self.WIDTH, height=50, bg=self.BG_COLOR_TOP)
+        self.topbuttonbar = tk.Frame(self.root, width=self.WIDTH, height=50, bg=self.BG_COLOR_TOP)
+        self.bottom = tk.Frame(self.root, width=self.WIDTH, height=50, bg=self.BG_COLOR)
+        
         self._setup_wpm_label()
+        self._setup_wpm_change_buttons()
+        self._setup_center_text()
 
-        # WPM speed change.
-        self.arr_up = tk.Frame(self.root, width=100, height=100, bg='red')
-        self.arr_up.bind('<Button-1>', self._increase_wpm)
-        self.arr_up.pack()
-
-        self.arr_down = tk.Frame(self.root, width=100, height=100, bg='green')
-        self.arr_down.bind('<Button-1>', self._decrease_wpm)
-        self.arr_down.pack()
-
-
-        self.root.after(self.text_delay, self._show_next_word)
+        self.topbar.pack(fill='both')
+        self.topbuttonbar.pack(fill='both')
+        self.bottom.pack()
+        
+        self.root.after(self._text_delay, self._show_next_word)
         self.root.mainloop()
 
     @property
@@ -54,9 +55,9 @@ class DisplayApp:
     
     @wpm.setter
     def wpm(self, value):
-        # Automatically sets delay between two actions.
+        # Automatically update delay between two subsequent words.
         self._wpm = int(value)
-        self.text_delay = 60 * 1000 // value
+        self._text_delay = 60 * 1000 // value
 
     def _change_text(self, text):
         self.txt_var.set(text)
@@ -68,7 +69,7 @@ class DisplayApp:
             self.txt_var.set('')
         else:
             self._change_text(new_text)
-            delay = self.eos_delay if self._eof_found(new_text) else self.text_delay
+            delay = self.eos_delay if self._eof_found(new_text) else self._text_delay
             self.root.after(delay, self._show_next_word)
 
     def _eof_found(self, text):
@@ -77,7 +78,7 @@ class DisplayApp:
     def _pause_on_eos(self):
         self.root(after(self.eos_delay, self._show_next_word))
 
-    def _setup_text_label(self):
+    def _setup_center_text(self):
         self.txt_var = tk.StringVar()
         self.msg = tk.Label(self.root, 
                             textvariable=self.txt_var, 
@@ -88,23 +89,34 @@ class DisplayApp:
         self.msg.place(relx=.5, rely=.5, anchor=tk.CENTER)
 
     def _setup_wpm_label(self):
-        self.wpm_var = tk.IntVar()
-        self.msg = tk.Label(self.root,
+        self.wpm_var = tk.StringVar()
+        self.msg = tk.Label(self.topbar,
                             textvariable=self.wpm_var,
                             anchor=tk.CENTER,
                             font=(self.FONT, self.FONT_SIZE),
-                            bg=self.BG_COLOR,
+                            bg=self.BG_COLOR_TOP,
                             fg=self.FONT_COLOR)
-        self.wpm_var.set(self.wpm)
+        self._update_wpm_display()
         self.msg.pack()
+    
+    def _setup_wpm_change_buttons(self):
+        wpm_down_btn = tk.Button(
+            self.topbuttonbar, text='--', command=self._decrease_wpm)
+        wpm_down_btn.config(height=1, width=10)
+        wpm_down_btn.place(relx=.46, rely=.5, anchor=tk.CENTER)
+        
+        wpm_up_btn = tk.Button(
+            self.topbuttonbar, text='++', command=self._increase_wpm)
+        wpm_up_btn.config(height=1, width=10)
+        wpm_up_btn.place(relx=.54, rely=.5, anchor=tk.CENTER)
 
-    def _increase_wpm(self, event):
+    def _increase_wpm(self):
         self.wpm += self.wpm_step
         self._update_wpm_display()
 
-    def _decrease_wpm(self, event):
+    def _decrease_wpm(self):
         self.wpm -= self.wpm_step
         self._update_wpm_display()
 
     def _update_wpm_display(self):
-        self.wpm_var.set(self.wpm)
+        self.wpm_var.set(f'wpm: {self.wpm}')
