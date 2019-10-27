@@ -121,7 +121,7 @@ class SpotReader:
         self._update_wpm_display()
 
     def _decrease_wpm(self):
-        self.wpm -= self.wpm_step
+        self.wpm = max(10, self.wpm - self.wpm_step)
         self._update_wpm_display()
 
     def _update_wpm_display(self):
